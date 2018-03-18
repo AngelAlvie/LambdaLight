@@ -1,0 +1,9 @@
+-- Welcome to Lambda Light 
+
+-- I really like the Haskell Comment Syntax, so I will stick to it.
+
+I = \x.x
+
+Y = \f.(\x.f(x x))(\x.f(x x))
+
+I Y 
