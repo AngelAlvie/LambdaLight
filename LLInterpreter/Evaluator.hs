@@ -11,13 +11,29 @@ module Evaluator (
 , test
 ) where
 
-data Expr = Var String | Abs Expr Expr | App Expr Expr deriving (Read)
+import Data.Map.Strict 
+
+-- we will define an environment of bindings, which we will execute our program in
+type Env = Map String Expr
+
+global_env :: Env
+global_env = empty
+
+data Expr = Var String 
+          | Abs Expr Expr 
+          | App Expr Expr
+          | Bind String Expr
+          | Prim String deriving (Read)
 -- We will define 3 semantic constructs: a 'Var'iable, 'Abs'traction, and 'App'lication.
+-- We will also define bindings, which modify the current environment,
+-- and Prim, which is a primitive function, defined by the language
+
 instance Show Expr where
   show (Var x) = x
   show (Abs x b) = "λ" ++ (show x) ++ "." ++ (show b)
   show (App e1 e2) =  "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
-
+  show (Bind s e) = s ++ " := " ++ (show e)
+  show (Prim s) = "<Built-In Function: " ++ s ++ " >"
 type Eval = Either String Expr
 
 eval :: Expr -> Eval
