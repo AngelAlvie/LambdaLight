@@ -11,64 +11,73 @@ module Evaluator (
 , test
 ) where
 
-import Data.Map.Strict 
+import Data.HashMap.Strict 
 
 -- we will define an environment of bindings, which we will execute our program in
-type Env = Map String Expr
+type Env = Map Expr Expr
 
-global_env :: Env
-global_env = empty
-
+-- we will define 3 semantic constructs: a 'Var'iable, 'Abs'traction, and 'App'lication.
+-- we will define 'Bind'ings, which modify the execution environment.
+-- we will define 'Prim'atives, which point to built in functions and values, replaced at substitution time.
 data Expr = Var String 
           | Abs Expr Expr 
           | App Expr Expr
-          | Bind String Expr
+          | Bind Expr Expr -- links a variable to an expression (attempt to simplify before binding)
           | Prim String deriving (Read)
--- We will define 3 semantic constructs: a 'Var'iable, 'Abs'traction, and 'App'lication.
--- We will also define bindings, which modify the current environment,
--- and Prim, which is a primitive function, defined by the language
+
+global_env :: Env
+global_env = empty
 
 instance Show Expr where
   show (Var x) = x
   show (Abs x b) = "λ" ++ (show x) ++ "." ++ (show b)
   show (App e1 e2) =  "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
-  show (Bind s e) = s ++ " := " ++ (show e)
-  show (Prim s) = "<Built-In Function: " ++ s ++ " >"
-type Eval = Either String Expr
+  show (Bind v e) = (show v) ++ " := " ++ (show e)
+  show (Prim s) = "<Primitive: " ++ s ++ " >"
 
-eval :: Expr -> Eval
-eval a@(Var x) = Right a
-eval a@(Abs x b) = Right a
-eval (App e1 e2) = apply e1 e2
+type Comp = (Expr, Env)
 
-apply :: Expr -> Expr -> Eval
-apply e1@(Abs x b) e2 = (substitute x b e2) >>= eval
-apply e1@(Var x) e2 = Left $ "Cannot apply an expression to a variable: " ++ (show e1)
-apply e1@(App a b) e2 = (eval e1) >>= \x -> apply x e2
+type Eval = Either String Comp
 
-substitute :: Expr -> Expr -> Expr -> Eval
-substitute (Var name) body@(Var x) value = if   (x == name)
-                                           then Right value
-                                           else Right body
+eval :: Comp -> Eval 
+eval   (  a@(Var v), env) = Right (a, env) -- Might want to do a variable lookup
+eval   (a@(Abs v b), env) = Right (a, env)
+eval a@((App e1 e2), env) = apply a
+eval ((Bind v@(Var s) e), env) = eval (e, env) >>= \(x, _) -> Right (x, (insert v x env)) -- modifies current environment to add a new binding
+--eval ((Prim s), env) = --
+
+
+apply :: Comp -> Eval
+apply ((App e1@(Abs x b) e2), env) = (substitute x b e2 env) >>= eval
+apply ((App e1@(Var x)   e2), env) = Left $ "Cannot apply an expression to a variable: " ++ (show e1)
+apply ((App e1@(App a b) e2), env) = (eval (e1, env)) >>= \(exp, _) -> apply ((Abs exp e2), env)
+apply (x, _) = Left $ "Internal Error: Attempted to Apply an expression that was not an application" ++ (show x)
+
+substitute :: Expr -> Expr -> Expr -> Env -> Eval
+substitute (Var name) body@(Var x) value env = if   (x == name)
+                                               then Right (value, env)
+                                               else Right (body, env)
 -- Introduce local scoping, if two variables have same name, don't substitute subtree.
-substitute (Var name) body@(Abs x b) value = if   ((var_val x) == name)
-                                             then Right body
-                                             else wrap Abs (Right x) (substitute (Var name) b value)  
-substitute (Var name) body@(App x y) value =  wrap App (substitute (Var name) x value) (substitute (Var name) y value)
-substitute bad@(Abs x y) _ _ = Left $ "Cannot bind abstractions with λ: " ++ (show bad)
-substitute bad@(App x y) _ _ = Left $ "Cannot bind applications with λ: " ++ (show bad)
+substitute (Var name) body@(Abs x b) value env = if   ((var_val x) == name)
+                                                 then Right (body, env)
+                                                 else wrap Abs (Right (x, env)) (substitute (Var name) b value env)  
+substitute (Var name) body@(App x y) value env = wrap App (substitute (Var name) x value env) (substitute (Var name) y value env)
+substitute bad@(Abs x y) _ _ _ = Left $ "Cannot bind abstractions with λ: " ++ (show bad)
+substitute bad@(App x y) _ _ _ = Left $ "Cannot bind applications with λ: " ++ (show bad)
 
+
+-- Wrap takes in a type constructor, and two evals (which may store an expression), and returns an Eval that wraps it (can be an abs or app)
 wrap ::  (Expr -> Expr -> Expr) -> Eval -> Eval -> Eval
-wrap tc (Right e1) (Right e2) = Right (tc e1 e2) -- tc represents a type constructor
-wrap _ _ _ = Left $ "Cannot bind within application"
+wrap tc (Right (e1, env)) (Right (e2, _)) = Right ((tc e1 e2), env) -- tc represents a type constructor -- this is skecthy
+wrap tc x y = Left $ "Cannot wrap type constructor, there was an error:" ++ (show x) ++ " and " ++ (show y)
 
-
-
+-- pulls out the name of a variable
 var_val :: Expr -> String
 var_val (Var name) = name
 
+-- Prints the result of a computation to the screen
 printer :: Eval -> IO ()
-printer (Right expr) = putStrLn $ show expr
+printer (Right (expr, _)) = putStrLn $ show expr
 printer (Left err) = throw err
 
 throw :: String -> IO ()
