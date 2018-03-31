@@ -5,6 +5,7 @@ module Evaluator (
 , Eval
 , global_env
 , lookup_prim
+, lookup_in_env
 , eval
 , apply
 , substitute
@@ -62,8 +63,8 @@ apply :: Comp -> Eval
 apply ((App e1@(Abs x b) e2), env) = (substitute x b e2 env) >>= eval
 apply ((App e1@(Var x)   e2), env) = case (lookup_in_env x env) of Nothing   -> Left $ "No Binding exists for variable: " ++ (show e1)
                                                                    Just expr -> apply ((App expr e2), env)
-apply ((App e1@(App a b) e2), env) = (eval (e1, env)) >>= \(exp, _) -> apply ((Abs exp e2), env)
-apply (x, _) = Left $ "Internal Error: Attempted to Apply an expression that was not an application" ++ (show x)
+apply ((App e1@(App a b) e2), env) = (eval (e1, env)) >>= \(exp, _) -> apply ((App exp e2), env)
+apply (x, _) = Left $ "Attempted to Apply an expression that was not an application: " ++ (show x)
 
 substitute :: Expr -> Expr -> Expr -> Env -> Eval
 substitute (Var name) body@(Var x) value env = if   (x == name)
@@ -99,4 +100,5 @@ throw err = putStrLn $ ("ERROR: " ++ err)
 test :: IO ()
 test = do
   putStrLn "Testing apply"
+  printer $ eval ((App (App (Abs (Var "a")(Abs (Var "b")(Var "a"))) (Abs (Var "c")(Abs (Var "d")(Var "c")))) (Abs (Var "e")(Var "f"))), empty)
   
