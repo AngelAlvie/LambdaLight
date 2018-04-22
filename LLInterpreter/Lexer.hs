@@ -1,10 +1,10 @@
 module Lexer (
-    Token
+    Token (..)
 ,   tokenize
 ,   head_words
 ) where 
 
-data Token = LParen | RParen | Word String | Lambda | Dot | Def deriving (Read, Show)
+data Token = LParen | RParen | Word String | Lambda | Dot | Def | End deriving (Read, Show, Eq)
 
 -- This takes in a string (corresponding to a whole expression, on a line.)
 tokenize :: String -> [Token]

@@ -3,5 +3,8 @@ import Evaluator
 import Lexer
 import Parser
 
+-- This is where we will define the REPL
+
 main = do
   return ()
+

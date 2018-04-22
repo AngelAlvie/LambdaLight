@@ -7,3 +7,11 @@ I = \x.x
 Y = \f.(\x.f(x x))(\x.f(x x))
 
 I Y 
+
+
+-- Here are some ASTs
+
+(Bind "I" (Abs (Var "x") (Var "x")))
+(Bind "O" (Abs (Var "x") (App (Var "x") (Var "x"))))
+(Bind "One" (Abs (Var "f") (Abs (Var "x") (App (Var "f") (Var "x")))))
+(Bind "Succ" (Abs (Var "n") (Abs (Var "f") (App (Var "f") (App (Var "n") (Var "f"))))))

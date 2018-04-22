@@ -1,8 +1,8 @@
 module Evaluator (
-  Expr
-, Comp
-, Env
-, Eval
+  Expr (..)
+, Comp (..)
+, Env  (..)
+, Eval (..)
 , global_env
 , lookup_prim
 , lookup_in_env
@@ -17,7 +17,6 @@ module Evaluator (
 ) where
 
 import Data.HashMap.Strict as M
-import Data.Hashable
 
 -- we will define an environment of bindings, which we will execute our program in
 type Env = HashMap String Expr
@@ -101,4 +100,4 @@ test :: IO ()
 test = do
   putStrLn "Testing apply"
   printer $ eval ((App (App (Abs (Var "a")(Abs (Var "b")(Var "a"))) (Abs (Var "c")(Abs (Var "d")(Var "c")))) (Abs (Var "e")(Var "f"))), empty)
-  
+
