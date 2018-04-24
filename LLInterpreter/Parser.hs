@@ -2,23 +2,28 @@ module Parser (
     parse
 ) where
 
-import Lexer (Token (LParen, RParen, Word, Lambda, Dot, Def, End)) 
-import Evaluator (Expr (Var, Abs, App, Bind, Prim))
+import Common
 
 -- The Parser should take in a list of tokens, and construct an Abstract Syntax Tree based on the Lexs that are returned by the lexer,
 -- The AST is defined in terms of the Evaluator Expr type.
 
 -- The parse function is just a dispatcher that checks if the token list implies a particular type of expression,
 -- And calls the appropriate sub-parser to handle it
+
 parse :: [Token] -> (Expr, [Token])
 parse x
-  | is_parens x = parse_parens x
-  | is_abs x = parse_abs x
-  | is_def x = parse_def x
-  | is_word x = parse_word x
+  | is_parens x = parse_app.parse_parens $ x
+  | is_abs x = parse_app.parse_abs $ x
+  | is_def x = parse_app.parse_def $ x
+  | is_word x = parse_app.parse_word $ x
   | otherwise = error "Unrecognized Expression"
 
--- We will want to parse the current
+-- We want to check whether or not we have leftover expressions, 
+-- if we do, then parse them and create an application with my current Expression
+parse_app :: (Expr, [Token]) -> (Expr, [Token])
+parse_app (e, []) = (e, [])
+parse_app (e, y) = let x = parse y in ((App e (fst x)), (snd x))
+
 
 is_parens :: [Token] -> Bool
 is_parens (x:xs) = x == LParen
@@ -47,16 +52,13 @@ parse_word ((Word x):xs) = ((Var x), xs)
 
 parse_parens :: [Token] -> (Expr, [Token])
 parse_parens x
-  | is_abs body = parse_abs body
-  | is_parens body = parse_parens body
-  | otherwise = parse_app body                       -- Assume it is an application if not an abstraction
+  | is_abs body    = ((fst (parse body)), right)
+  | is_parens body = ((fst (parse body)), right)
+  | is_word body   = ((fst (parse body)), right)
+  | otherwise = error "Cannot parse statement"               -- Assume it is an application if not an abstraction
   where out = get_parens_expr x
         body = fst out
-        left = snd out
-
--- There isn't really a way to tell if a series of expressions is an application, instead of something else. implicitly, if there is a syntactic construct before another construct, then it is being applied to the first construc
-parse_app :: [Token] -> (Expr, [Token])
-parse_app _ = ((App (Var "x") (Var "x")),[])
+        right = snd out
 
 -- This function takes a token string, and returns the sub token list that is contained in the outermost parens
 -- The first token list returned by get_parens_expr should be the body of the parens, the second token list is the remaining tokens
@@ -90,14 +92,3 @@ valid_abs x =
 word_string :: Token -> String
 word_string (Word x) = x
 word_string _ = error "Tried to extract a string from not a word"
-
--- These functions are designed to parse very specific types of expressions
--- Takes an expression, returns the rest of the tokens after parsing the expression
-
--- Assume everything after this is just a definition. (so Assume parse_def was passed a definition)
---parse_def :: [Token] -> (Expr, [Token])
-
---parse_func :: [Token] -> (Expr, [Token])
-
-
---parse_abs :: [Token] -> (Expr, [Token])
