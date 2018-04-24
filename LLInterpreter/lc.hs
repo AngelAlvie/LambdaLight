@@ -14,18 +14,23 @@ read_ = putStr "λ: "
      >> getLine
 
 eval_ :: String -> Env -> Eval
-eval_ input = (parse.tokenize $ input)
+eval_ input env = eval (fst (parse.tokenize $ input), env)
 
-print_ :: Eval -> IO ()
-print_ = printer
 
 -- Loop of the repl
 main :: IO ()
-main = do 
+main = do
+  main_helper global_env 
+  return ()
+
+main_helper :: Env -> IO ()
+main_helper env = do
   input <- read_
   if (input == "quit")
   then return ()
-  else
-    result = eval_ input global
-    
-    print_(eval_ input) >> main
+  else let 
+    result = eval_ input env
+    in 
+    case result of 
+      Left s       -> printer result >> (main_helper env)
+      Right (e, n) -> printer result >> (main_helper n)
