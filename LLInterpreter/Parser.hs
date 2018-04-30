@@ -16,6 +16,7 @@ parse x
   | is_abs x = parse_app.parse_abs $ x
   | is_def x = parse_app.parse_def $ x
   | is_word x = parse_app.parse_word $ x
+  | null x = ((Prim "None"), [])
   | otherwise = error "Unrecognized Expression"
 
 -- We want to check whether or not we have leftover expressions, 

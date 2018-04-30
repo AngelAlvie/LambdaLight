@@ -16,8 +16,12 @@ tokenize (x:xs) = case x of 'λ' -> Lambda : tokenize xs
                             ':' -> if head xs == '=' then Def : tokenize (tail xs)
                                                      else Word "h" : tokenize xs
                             ' ' -> tokenize xs
+                            '-' -> if head xs == '-' then [] else tokenize_word (x:xs)
                             -- identify words
-                            x -> let ans = (head_words (x:xs)) in Word (fst ans) : (tokenize (snd ans))
+                            x -> tokenize_word (x:xs)
+
+tokenize_word :: String -> [Token]
+tokenize_word (x:xs) = let ans = (head_words (x:xs)) in Word (fst ans) : (tokenize (snd ans))
 
 -- Splits a string into first word, and the rest of the words
 head_words :: String -> (String, String)

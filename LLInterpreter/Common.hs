@@ -39,7 +39,7 @@ instance Show Expr where
     show (Abs x b) = "λ" ++ (show x) ++ "." ++ (show b)
     show (App e1 e2) =  "(" ++ (show e1) ++ " " ++ (show e2) ++ ")"
     show (Bind v e) = (show v) ++ " := " ++ (show e)
-    show (Prim s) = "<Primitive: " ++ s ++ " >"
+    show (Prim s) = "<Primitive: " ++ s ++ ">"
 
 lookup_in_env :: String -> Env -> Maybe Expr
 lookup_in_env var env = M.lookup var env
@@ -52,11 +52,9 @@ type Comp = (Expr, Env)
 type Eval = Either String Comp
 
 -- Prints the result of a computation to the screen
-printer :: Eval -> IO ()
-printer (Right (expr, _)) = putStrLn $ show expr
+printer :: Eval -> String
+printer (Right (expr, _)) =show expr
 printer (Left err) = throw err
 
-
-throw :: String -> IO ()
-throw err = putStrLn $ ("ERROR: " ++ err)
-
+throw :: String -> String
+throw err = "ERROR: " ++ err

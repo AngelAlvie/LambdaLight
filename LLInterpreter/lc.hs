@@ -1,36 +1,35 @@
 -- This is an interpreter for the Lambda Calculus, written in Haskell
-import Control.Monad
-import System.IO
+import System.Console.Haskeline
 import Evaluator
 import Lexer
 import Parser
 import Common
 -- This is where we will define the REPL
 
-
-read_ :: IO String
-read_ = putStr "λ: "
-     >> hFlush stdout
-     >> getLine
-
 eval_ :: String -> Env -> Eval
 eval_ input env = eval (fst (parse.tokenize $ input), env)
 
-
 -- Loop of the repl
 main :: IO ()
-main = do
-  main_helper global_env 
-  return ()
+main = runInputT defaultSettings (loop global_env)
+  where
+    loop :: Env -> InputT IO ()
+    loop env = do
+      input <- getInputLine "λ: "
+      case input of
+        Nothing -> return ()
+        (Just str) -> if quit_ str
+                      then return ()
+                      else let 
+                        result = eval_ str env
+                        in do 
+                          outputStrLn.printer $ result
+                          case result of
+                            Left s       -> do (loop env)
+                            Right (e, n) -> do (loop n)
 
-main_helper :: Env -> IO ()
-main_helper env = do
-  input <- read_
-  if (input == "quit")
-  then return ()
-  else let 
-    result = eval_ input env
-    in 
-    case result of 
-      Left s       -> printer result >> (main_helper env)
-      Right (e, n) -> printer result >> (main_helper n)
+quit_ :: String -> Bool
+quit_ "quit" = True
+quit_ "exit" = True
+quit_ ":q"   = True
+quit_ _      = False
