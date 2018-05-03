@@ -11,21 +11,26 @@ import Common
 -- And calls the appropriate sub-parser to handle it
 
 parse :: [Token] -> (Expr, [Token])
-parse x
-  | is_parens x = parse_app.parse_parens $ x
-  | is_abs x = parse_app.parse_abs $ x
-  | is_def x = parse_app.parse_def $ x
-  | is_word x = parse_app.parse_word $ x
-  | null x = ((Prim "None"), [])
-  | otherwise = error "Unrecognized Expression"
+parse x = parse_app.parse_atomic $ x
+  
+parse_app :: (Expr, [Token]) -> (Expr, [Token])
+parse_app (first_expr, rest_tokens) = if null rest_tokens
+                                      then (first_expr, [])
+                                      else let (next_expr, rest_next_tokens) = parse_atomic rest_tokens in
+                                        parse_app ((App (first_expr) (next_expr)), rest_next_tokens)
+
+
+parse_atomic :: [Token] -> (Expr, [Token])
+parse_atomic x
+  | is_def x    = parse_def $ x -- a definition can never be applied.
+  | is_parens x = parse_parens $ x -- A parenthesized expression 
+  | is_abs x    = parse_abs $ x 
+  | is_word x   = parse_word $ x 
+  | null x      = ((Prim "None"), [])
+  | otherwise   = error "Unrecognized Expression"
 
 -- We want to check whether or not we have leftover expressions, 
 -- if we do, then parse them and create an application with my current Expression
-parse_app :: (Expr, [Token]) -> (Expr, [Token])
-parse_app (e, []) = (e, [])
-parse_app (e, y) = let x = parse y in ((App e (fst x)), (snd x))
-
-
 is_parens :: [Token] -> Bool
 is_parens (x:xs) = x == LParen
 is_parens _ = False
@@ -46,8 +51,9 @@ parse_def :: [Token] -> (Expr, [Token])
 parse_def x =
   let (expr, rest) = parse.tail.tail $ x 
       var  = word_string.head $ x
-  in ((Bind var expr), rest)
-
+  in case rest of
+    [] -> ((Bind var expr), rest)
+    x  -> ((Bind var expr), rest)
 parse_word :: [Token] -> (Expr, [Token])
 parse_word ((Word x):xs) = ((Var x), xs)
 
@@ -57,8 +63,8 @@ parse_parens x
   | is_parens body = ((fst (parse body)), right)
   | is_word body   = ((fst (parse body)), right)
   | otherwise = error "Cannot parse statement"               -- Assume it is an application if not an abstraction
-  where out = get_parens_expr x
-        body = fst out
+  where out   = get_parens_expr x
+        body  = fst out
         right = snd out
 
 -- This function takes a token string, and returns the sub token list that is contained in the outermost parens

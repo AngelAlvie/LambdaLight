@@ -6,7 +6,7 @@ module Lexer (
 import Common
 
 -- This takes in a string (corresponding to a whole expression, on a line.)
-tokenize :: String -> [Token]
+tokenize :: String ->  [Token]
 tokenize "" = []
 tokenize (x:xs) = case x of 'λ' -> Lambda : tokenize xs
                             '\\'-> Lambda : tokenize xs
@@ -14,7 +14,7 @@ tokenize (x:xs) = case x of 'λ' -> Lambda : tokenize xs
                             ')' -> RParen : tokenize xs
                             '.' -> Dot   : tokenize xs
                             ':' -> if head xs == '=' then Def : tokenize (tail xs)
-                                                     else Word "h" : tokenize xs
+                                                     else tokenize_word (x:xs)   -- TODO remove this
                             ' ' -> tokenize xs
                             '-' -> if head xs == '-' then [] else tokenize_word (x:xs)
                             -- identify words
