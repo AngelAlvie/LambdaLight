@@ -8,11 +8,22 @@ module Evaluator (
 
 import Common
 
+{-
+Remember that these are the definitions of Comp and Eval:
+type Comp = (Expr, Env)
+
+type Eval = Either String Comp
+-}
+
+
+
+
 eval :: Comp -> Eval 
 eval     (a@(Var v), env) = Right (a, env)
 eval   (a@(Abs v b), env) = Right (a, env)
 eval a@((App e1 e2), env) = apply a
-eval    ((Bind s e), env) = eval (e, env) >>= \(x, _) -> Right (x, (insert s x env)) -- modifies current environment to add a new bindin
+eval    ((Bind s e), env) = if (is_combinator (e, env)) then eval (e, env) >>= \(x, _) -> Right (x, (insert s x env)) 
+                                                     else Left $ "Expression: " ++ (show e) ++ " has variables that have not been defined yet"
 eval ((Prim s), env) = Right (lookup_prim s, env)
 
 -- apply will evaluate variables as they are applied. So all variables will retain their names unless told otherwise.
@@ -44,3 +55,15 @@ wrap tc x y = Left $ "Cannot wrap type constructor, there was an error:" ++ (sho
 -- pulls out the name of a variable
 var_val :: Expr -> String
 var_val (Var name) = name
+
+-- this function checks to make sure that a particular expression is defined in terms of things that have already been defined.
+is_combinator :: Comp -> Bool
+is_combinator ((Abs (Var s) e), env) = is_combinator (e, (insert s (Var s) env))   
+is_combinator     ((App e1 e2), env) = (is_combinator (e1, env)) && (is_combinator (e2, env))
+is_combinator          ((Var v),env) = check_var (lookup_in_env v env)
+is_combinator        ((Prim s), env) = check_var (lookup_in_env s env)
+is_combinator      ((Bind s e), env) = is_combinator (e, env)
+
+check_var :: Maybe Expr -> Bool
+check_var Nothing     = False
+check_var (Just expr) = True
