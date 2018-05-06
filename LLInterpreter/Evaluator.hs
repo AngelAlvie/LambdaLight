@@ -11,18 +11,19 @@ import Common
 eval :: Comp -> Eval 
 eval     (a@(Var v), env) = Right (a, env)
 eval   (a@(Abs v b), env) = Right (a, env)
+eval    (p@(Prim s), env) = Right (p, env)
 eval a@((App e1 e2), env) = apply a
-eval    ((Bind s e), env) = if (is_combinator (e, env)) then eval (e, env) >>= \(x, _) -> Right (x, (insert s x env)) 
-                                                     else Left $ "Expression: " ++ (show e) ++ " has variables that have not been defined yet"
-eval ((Prim s), env) = Right (lookup_prim s, env)
-
+eval    ((Bind s e), env) = if (is_combinator (e, env)) 
+                            then eval (e, env) >>= \(x, _) -> Right (x, (insert s x env)) 
+                            else Left $ "Expression: " ++ (show e) ++ " has variables that have not been defined yet"
 -- apply will evaluate variables as they are applied. So all variables will retain their names unless told otherwise.
 apply :: Comp -> Eval
 apply ((App e1@(Abs x b) e2), env) = (substitute x b e2 env) >>= eval
 apply ((App e1@(Var x)   e2), env) = case (lookup_in_env x env) of Nothing   -> Left $ "No Binding exists for variable: " ++ (show e1)
                                                                    Just expr -> apply ((App expr e2), env)
 apply ((App e1@(App a b) e2), env) = (eval (e1, env)) >>= \(exp, _) -> apply ((App exp e2), env)
-apply (x, _) = Left $ "Attempted to Apply an expression that was not an application: " ++ (show x)
+apply ((App (Prim s) e), env) = apply_primitive s e env
+apply (x, _) = Left $ "Attempted to Apply an expression that was not a function: " ++ (show x)
 
 substitute :: Expr -> Expr -> Expr -> Env -> Eval
 substitute (Var name) body@(Var x) value env = if   (x == name)

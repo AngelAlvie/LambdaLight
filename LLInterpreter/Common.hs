@@ -8,7 +8,7 @@ module Common (
 , Env   (..)
 , Eval  (..)
 , global_env
-, lookup_prim
+, apply_primitive
 , lookup_in_env
 , printer
 , throw
@@ -32,7 +32,7 @@ data Expr = Var String
 type Env = HashMap String Expr
 
 global_env :: Env
-global_env = empty
+global_env = fromList [("show", (Prim "show"))]
 
 instance Show Expr where
     show (Var x) = x
@@ -44,8 +44,12 @@ instance Show Expr where
 lookup_in_env :: String -> Env -> Maybe Expr
 lookup_in_env var env = M.lookup var env
 
-lookup_prim :: String -> Expr
-lookup_prim _ = (Prim "None")
+apply_primitive :: String -> Expr -> Env -> Eval
+apply_primitive "show" (Var s) env = case (M.lookup s env) of Nothing     -> Left $ "Unknown Function: " ++ s
+                                                              (Just expr) -> Right (expr, env)
+apply_primitive "show" expr env = Right (expr, env)
+apply_primitive "None" x env = Right (x, env)
+apply_primitive s _ _ = Left $ "Unknown Primitive: " ++ s
 
 type Comp = (Expr, Env)
 
