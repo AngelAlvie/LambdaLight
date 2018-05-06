@@ -1,17 +1,23 @@
 -- Welcome to Lambda Light 
+I := \x.x
+Y := \f.(\x.f(x x))(\x.f(x x))
 
--- I really like the Haskell Comment Syntax, so I will stick to it.
+-- Booleans
+true := \a.\b.a
+false := \a.\b.b
 
-I = \x.x
+not := \b. b false true
+and := \b1.\b2.b1 b2 false
+or  := \b1.\b2.b1 true b2
 
-Y = \f.(\x.f(x x))(\x.f(x x))
+-- Lists & Pairs
+cons := \a.\b.\f.f a b
+car  := \p. p (\a.\b.a)
+cdr  := \p. p (\a.\b.b)
+nil  := \x.false
 
-I Y 
+-- Math
 
 
--- Here are some ASTs
-
-(Bind "I" (Abs (Var "x") (Var "x")))
-(Bind "O" (Abs (Var "x") (App (Var "x") (Var "x"))))
-(Bind "One" (Abs (Var "f") (Abs (Var "x") (App (Var "f") (Var "x")))))
-(Bind "Succ" (Abs (Var "n") (Abs (Var "f") (App (Var "f") (App (Var "n") (Var "f"))))))
+I := \x.x
+Y := \f.(\x.f(x x))(\x.f(x x))

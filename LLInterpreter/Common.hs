@@ -51,6 +51,7 @@ type Comp = (Expr, Env)
 
 type Eval = Either String Comp
 
+
 -- Prints the result of a computation to the screen
 printer :: Eval -> String
 printer (Right (expr, _)) =show expr

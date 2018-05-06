@@ -8,16 +8,6 @@ module Evaluator (
 
 import Common
 
-{-
-Remember that these are the definitions of Comp and Eval:
-type Comp = (Expr, Env)
-
-type Eval = Either String Comp
--}
-
-
-
-
 eval :: Comp -> Eval 
 eval     (a@(Var v), env) = Right (a, env)
 eval   (a@(Abs v b), env) = Right (a, env)

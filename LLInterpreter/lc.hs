@@ -7,7 +7,7 @@ import Common
 -- This is where we will define the REPL
 
 eval_ :: String -> Env -> Eval
-eval_ input env = eval (fst (parse.tokenize $ input), env)
+eval_ input env = (parse (tokenize input)) >>= \(ast, _) -> eval (ast, env)
 
 -- Loop of the repl
 main :: IO ()
