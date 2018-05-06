@@ -14,7 +14,8 @@ eval   (a@(Abs v b), env) = Right (a, env)
 eval    (p@(Prim s), env) = Right (p, env)
 eval a@((App e1 e2), env) = apply a
 eval    ((Bind s e), env) = if (is_combinator (e, env)) 
-                            then eval (e, env) >>= \(x, _) -> Right (x, (insert s x env)) 
+                            then eval (e, env) >>= \(x, _) -> case lookup_in_env s env of Nothing -> Right (x, (insert s x env))
+                                                                                          Just _  -> Left $ s ++ " is already defined"
                             else Left $ "Expression: " ++ (show e) ++ " has variables that have not been defined yet"
 -- apply will evaluate variables as they are applied. So all variables will retain their names unless told otherwise.
 apply :: Comp -> Eval
