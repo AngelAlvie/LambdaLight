@@ -9,7 +9,8 @@ module Evaluator (
 import Common
 
 eval :: Comp -> Eval 
-eval     (a@(Var v), env) = Right (a, env)
+eval     (a@(Var v), env) = case (lookup_in_env v env) of Just expr -> Right (expr, env)
+                                                          Nothing    -> Right (a, env)
 eval   (a@(Abs v b), env) = Right (a, env)
 eval    (p@(Prim s), env) = Right (p, env)
 eval a@((App e1 e2), env) = apply a

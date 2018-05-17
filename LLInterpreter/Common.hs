@@ -42,7 +42,21 @@ instance Show Expr where
     show (Prim s) = "<Primitive: " ++ s ++ ">"
 
 lookup_in_env :: String -> Env -> Maybe Expr
-lookup_in_env var env = M.lookup var env
+lookup_in_env var env = if isNatural var then Just (church var) else M.lookup var env -- check if it is a number and do church conversion, otherwise, do lookup
+
+isNatural :: String -> Bool
+isNatural [] = True
+isNatural (x:xs)
+   | elem x "1234567890" = isNatural xs
+   | otherwise = False
+
+-- Church takes a string number and returns a expression.
+church :: String -> Expr
+church nat = (Abs (Var "f") (Abs (Var "x") (church_helper (read nat))))
+
+church_helper :: Int -> Expr
+church_helper 0 = (Var "x")
+church_helper n = (App (Var "f") (church_helper (pred n)))
 
 apply_primitive :: String -> Expr -> Env -> Eval
 apply_primitive "show" (Var s) env = case (M.lookup s env) of Nothing     -> Left $ "Unknown Function: " ++ s
