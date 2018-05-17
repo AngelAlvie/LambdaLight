@@ -59,8 +59,8 @@ church_helper 0 = (Var "x")
 church_helper n = (App (Var "f") (church_helper (pred n)))
 
 apply_primitive :: String -> Expr -> Env -> Eval
-apply_primitive "show" (Var s) env = case (M.lookup s env) of Nothing     -> Left $ "Unknown Function: " ++ s
-                                                              (Just expr) -> Right (expr, env)
+apply_primitive "show" (Var s) env = case lookup_in_env s env of Nothing     -> Left $ "Unknown Function: " ++ s
+                                                                 (Just expr) -> Right (expr, env)
 apply_primitive "show" expr env = Right (expr, env)
 apply_primitive "None" x env = Right (x, env)
 apply_primitive s _ _ = Left $ "Unknown Primitive: " ++ s

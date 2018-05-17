@@ -18,6 +18,25 @@ nil  := \x.false
 
 -- Math
 
+-- Church Numerals Already defined
+succ := \n.\f.\x.f (n f x)
+pred := \n.\f.\x.n (\g.\h.h (g f)) (\u.x) I
++  := \n.\m. (n succ) m
+-  := \n.\m. (m pred) n
+*  := \n.\m. n (+ m) 0
+^  := \n.\m. m (* n) 1
+
+-- Comparison
+isZero := \n.n (\x.false) true
+<=  := \n.\m.isZero (- n m)
+>=  := \n.\m.isZero (- m n)
+==  := \n.\m.and (>= n m) (<= n m)
+<   := \n.\m.not (>= n m)
+>   := \n.\m.not (<= n m)
+
+-- Misc
 
 I := \x.x
 Y := \f.(\x.f(x x))(\x.f(x x))
+
+! := Y (\f.\n. (isZero n) 1 (* n (f (pred n))))
