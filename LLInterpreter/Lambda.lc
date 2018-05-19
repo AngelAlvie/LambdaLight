@@ -1,4 +1,11 @@
 -- Welcome to Lambda Light 
+
+-- This is a language meant to emulate the Lambda Calculus originally created by Alonzo Church.
+-- This File contains an number of definitions that make it easier to bootstrap functions that might be useful to have.
+-- Code Repository on GitHub: https://github.com/AngelAlvie/LambdaLight. Enjoy.
+
+-- Combinators
+
 I := \x.x
 Y := \f.(\x.f(x x))(\x.f(x x))
 
@@ -14,11 +21,16 @@ or  := \b1.\b2.b1 true b2
 cons := \a.\b.\f.f a b
 car  := \p. p (\a.\b.a)
 cdr  := \p. p (\a.\b.b)
-nil  := \x.false
+nil  := \x.true
+null? := \l.l (\a.\b.false) 
+
+map := Y (\map.\f.\l.(null? l) (nil) (cons (f (car l)) (map f (cdr l))))
 
 -- Math
 
--- Church Numerals Already defined
+-- Church Numerals Native to Language
+
+-- Operators
 succ := \n.\f.\x.f (n f x)
 pred := \n.\f.\x.n (\g.\h.h (g f)) (\u.x) I
 +  := \n.\m. (n succ) m
@@ -39,4 +51,4 @@ isZero := \n.n (\x.false) true
 I := \x.x
 Y := \f.(\x.f(x x))(\x.f(x x))
 
-! := Y (\f.\n. (isZero n) 1 (* n (f (pred n))))
+factorial := Y (\f.\n. (isZero n) 1 (* n (f (pred n))))
